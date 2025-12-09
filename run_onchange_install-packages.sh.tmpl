@@ -1,0 +1,70 @@
+{{- if eq .chezmoi.os "darwin" -}}
+#!/bin/bash
+
+# A. macOS Logic
+# Hash the Brewfile so this script runs when Brewfile changes
+# Brewfile hash: {{ include "Brewfile" | sha256sum }}
+
+echo "Detected macOS. Checking Homebrew..."
+
+if ! command -v brew &> /dev/null; then
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
+echo "Running Brew Bundle..."
+brew bundle --file={{ joinPath .chezmoi.sourceDir "Brewfile" }}
+
+echo "Linking Nushell config to Application Support..."
+TARGET="$HOME/Library/Application Support/nushell"
+CONFIG="$HOME/.config/nushell"
+
+# Only link if the config exists and the link doesn't
+if [ -d "$CONFIG" ]; then
+    # Remove existing folder if it's not a symlink
+    if [ ! -L "$TARGET" ]; then
+        rm -rf "$TARGET"
+    fi
+    
+    # Create the symlink
+    ln -sfn "$CONFIG" "$TARGET"
+fi
+
+{{- else if eq .chezmoi.os "linux" -}}
+#!/bin/bash
+
+# B. Linux Logic
+echo "Detected Linux. Setting up dependencies..."
+
+# 1. Install Basic Tools (Sudo required)
+sudo apt-get update
+sudo apt-get install -y build-essential procps curl file git ncurses-term
+
+# 2. Install Homebrew (Linuxbrew)
+if ! command -v brew &> /dev/null; then
+    echo "Installing Linuxbrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
+
+# 3. Brew Bundle
+# Hash the Brewfile so this script runs when Brewfile changes
+# Brewfile hash: {{ include "Brewfile" | sha256sum }}
+
+echo "Running Brew Bundle..."
+brew bundle --file={{ joinPath .chezmoi.sourceDir "Brewfile" }}
+
+{{- end -}}
+
+# C. Common Post-Install Logic (Shell switching)
+NU_PATH=$(which nu)
+
+if [ -f "$NU_PATH" ]; then
+    if ! grep -q "$NU_PATH" /etc/shells; then
+        echo "Adding Nushell to /etc/shells..."
+        echo "$NU_PATH" | sudo tee -a /etc/shells
+    fi
+    echo "Installation complete. Please change your shell manually with: chsh -s $NU_PATH"
+else
+    echo "Error: Nushell not found in path."
+fi
