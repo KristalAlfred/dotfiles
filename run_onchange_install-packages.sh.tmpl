@@ -21,16 +21,13 @@ CONFIG="$HOME/.config/nushell"
 
 # Only link if the config exists and the link doesn't
 if [ -d "$CONFIG" ]; then
-    # Remove existing folder if it's not a symlink
     if [ ! -L "$TARGET" ]; then
         rm -rf "$TARGET"
     fi
-    
-    # Create the symlink
     ln -sfn "$CONFIG" "$TARGET"
 fi
 
-{{- else if eq .chezmoi.os "linux" -}}
+{{ else if eq .chezmoi.os "linux" }}
 #!/bin/bash
 
 # B. Linux Logic
@@ -54,7 +51,7 @@ fi
 echo "Running Brew Bundle..."
 brew bundle --file={{ joinPath .chezmoi.sourceDir "Brewfile" }}
 
-{{- end -}}
+{{ end }}
 
 # C. Common Post-Install Logic (Shell switching)
 NU_PATH=$(which nu)
