@@ -1,0 +1,39 @@
+add_newline = false
+# 1. format: defines the order of modules.
+# $line_break is omitted here, effectively making it one line.
+format = """
+$directory\
+$git_branch\
+$git_status\
+$package\
+$nodejs\
+$rust\
+$golang\
+$php\
+$python\
+$character"""
+
+# 2. Make the prompt one line
+[line_break]
+disabled = true
+
+# 3. Directory style (cyan color, truncated path)
+[directory]
+style = "bold cyan"
+truncation_length = 3
+truncation_symbol = "…/"
+
+# 4. Git settings
+[git_branch]
+style = "bold purple"
+symbol = " "
+
+[git_status]
+style = "bold red"
+format = '[$all_status$ahead_behind]($style) '
+
+# 5. The prompt character (the arrow)
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"
+#vicmd_symbol = "[❮](bold yellow)"
