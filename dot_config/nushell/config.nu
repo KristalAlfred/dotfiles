@@ -25,8 +25,6 @@ alias grep = rg
 # Git aliases
 alias g = git
 alias gs = git status -sb
-alias gc = git commit
-alias gac = git add -A; git commit -m
 
 # Dotfiles management
 alias cz = cd ~/.local/share/chezmoi
@@ -39,9 +37,55 @@ def --env c [dir: path] {
 
 # Sesh + FZF session switcher
 def --env t [] {
-    let session = (sesh list | fzf --height 40% --reverse --border)
-    if ($session | is-empty) == false {
-        sesh connect $session
+    # 1. Get the list of possible project directories for FZF
+    let project_paths = (
+      fd 
+        --mindepth 1 
+        --maxdepth 1 
+        --type d 
+        . ~/git ~/git-templates ~/remotes 
+        | lines | sort
+    )
+    
+    # 2. Get existing sessions as plain strings
+    let existing_sessions = (
+        sesh list -j 
+        | from json 
+        | get Name 
+        | prepend "--- Connect to Existing Session ---"
+    )
+    
+    # 3. Combine both lists and let the user select one
+    let all_options = ($project_paths | append $existing_sessions)
+    let selection = (
+        $all_options 
+        | str join (char newline)
+        | fzf --height 40% --reverse --border 
+        | str trim
+    )
+    
+    if ($selection | is-empty) {
+        return # User canceled
+    }
+    
+    # 4. Handle selection
+    if ($selection == "--- Connect to Existing Session ---") {
+        let session_to_connect = (
+            sesh list -j 
+            | from json 
+            | get name 
+            | str join (char newline)
+            | fzf --height 40% --reverse --border 
+            | str trim
+        )
+        if not ($session_to_connect | is-empty) {
+            sesh connect $session_to_connect
+        }
+    } else if $selection in $project_paths {
+        let session_name = ($selection | path basename | str replace '.' '_')
+        sesh connect -s $session_name -c $selection
+    } else {
+        sesh connect $selection
     }
 }
 
