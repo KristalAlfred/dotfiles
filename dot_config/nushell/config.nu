@@ -3,6 +3,8 @@
 $env.config.show_banner = false
 $env.config.buffer_editor = "nvim"
 $env.config.edit_mode = "vi"
+$env.config.table.mode = "compact"  # or "thin"
+#$env.config.table.truncate = "ellipsis"
 
 # Source integrations
 source ($nu.default-config-dir | path join 'scripts/starship.nu')
@@ -13,6 +15,8 @@ source ($nu.default-config-dir | path join 'scripts/atuin.nu')
 if (($nu.default-config-dir | path join 'scripts/carapace.nu') | path exists) {
     source ($nu.default-config-dir | path join 'scripts/carapace.nu')
 }
+
+source (path join '/opt/homebrew/opt/ccache/libexec')
 
 # --- ALIASES ---
 # Common shortcuts
@@ -142,3 +146,10 @@ $env.config.keybindings = (
         }
     }
 )
+
+# --- SPECIFIC TOOLS ---
+#
+# FNM
+#
+fnm env --json | from json | load-env
+$env.PATH = ($env.PATH | prepend $"($env.FNM_MULTISHELL_PATH)/bin")
