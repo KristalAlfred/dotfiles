@@ -33,3 +33,8 @@
 - When making changes, run tests
 - Consider edge cases
 - Think about error handling upfront
+
+## Shell
+
+I use nushell for my day-to-day, so output any commands in nushell unless specified
+otherwise.
