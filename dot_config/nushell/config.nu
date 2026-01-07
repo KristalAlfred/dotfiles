@@ -16,7 +16,7 @@ if (($nu.default-config-dir | path join 'scripts/carapace.nu') | path exists) {
     source ($nu.default-config-dir | path join 'scripts/carapace.nu')
 }
 
-source (path join '/opt/homebrew/opt/ccache/libexec')
+$env.PATH = ($env.PATH | prepend '/opt/homebrew/opt/ccache/libexec')
 
 # --- ALIASES ---
 # Common shortcuts
@@ -39,57 +39,69 @@ def --env c [dir: path] {
     ls -a
 }
 
-# Sesh + FZF session switcher
+# Tmux + FZF session switcher (Native version, no 'sesh')
 def --env t [] {
-    # 1. Get the list of possible project directories for FZF
+    # 1. Get possible project directories
+    # We use 'try' so it doesn't crash if a folder is missing
     let project_paths = (
-      fd 
-        --mindepth 1 
-        --maxdepth 1 
-        --type d 
-        . ~/git ~/git-templates ~/remotes 
-        | lines | sort
+        try { 
+            fd --mindepth 1 --maxdepth 1 --type d . ~/git ~/git-templates ~/remotes
+            | lines 
+            | sort
+        } catch { [] }
     )
-    
-    # 2. Get existing sessions as plain strings
-    let existing_sessions = (
-        sesh list -j 
-        | from json 
-        | get Name 
-        | prepend "--- Connect to Existing Session ---"
+
+    # 2. Get current running tmux sessions (clean output)
+    # Returns empty list if tmux isn't running
+    let running_sessions = (
+        try {
+            tmux list-sessions -F "#{session_name}" | lines
+        } catch { [] }
     )
-    
-    # 3. Combine both lists and let the user select one
-    let all_options = ($project_paths | append $existing_sessions)
+
+    # 3. Combine lists (Projects + Existing Sessions)
+    # We color existing sessions green in FZF so you can distinguish them
+    let all_options = (
+        $project_paths 
+        | append ($running_sessions | each { |s| $"($s) (Running)" })
+    )
+
     let selection = (
         $all_options 
         | str join (char newline)
-        | fzf --height 40% --reverse --border 
+        | fzf --height 40% --reverse --border --header "Select Project or Session"
         | str trim
     )
-    
-    if ($selection | is-empty) {
-        return # User canceled
-    }
-    
-    # 4. Handle selection
-    if ($selection == "--- Connect to Existing Session ---") {
-        let session_to_connect = (
-            sesh list -j 
-            | from json 
-            | get name 
-            | str join (char newline)
-            | fzf --height 40% --reverse --border 
-            | str trim
-        )
-        if not ($session_to_connect | is-empty) {
-            sesh connect $session_to_connect
-        }
-    } else if $selection in $project_paths {
-        let session_name = ($selection | path basename | str replace '.' '_')
-        sesh connect -s $session_name -c $selection
+
+    if ($selection | is-empty) { return }
+
+    # 4. Determine if we are switching to a dir or a running session
+    if ($selection | str ends-with " (Running)") {
+        # It's an existing session
+        let session_name = ($selection | str replace " (Running)" "")
+        _tmux_connect $session_name
     } else {
-        sesh connect $selection
+        # It's a directory -> Create new session name from folder name
+        let session_name = ($selection | path basename | str replace "." "_")
+        
+        # Create the session detached first (if it doesn't exist)
+        # -d = detached, -s = name, -c = start directory
+        try {
+            tmux new-session -d -s $session_name -c $selection
+        }
+
+        _tmux_connect $session_name
+    }
+}
+
+# Helper to handle "Attach vs Switch" logic
+def --env _tmux_connect [session_name: string] {
+    if ($env.TMUX? | is-empty) {
+        # We are NOT inside tmux -> Attach
+        tmux attach-session -t $session_name
+    } else {
+        # We ARE inside tmux -> Switch client
+        tmux switch-client -t $session_name
     }
 }
 
