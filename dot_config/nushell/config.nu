@@ -40,58 +40,39 @@ def --env c [dir: path] {
 }
 
 # Tmux + FZF session switcher (Native version, no 'sesh')
+# Tmux Project Switcher (Folders only)
 def --env t [] {
     # 1. Get possible project directories
-    # We use 'try' so it doesn't crash if a folder is missing
     let project_paths = (
         try { 
+            # Adjust these paths to match your actual git directories
             fd --mindepth 1 --maxdepth 1 --type d . ~/git ~/git-templates ~/remotes
             | lines 
             | sort
         } catch { [] }
     )
 
-    # 2. Get current running tmux sessions (clean output)
-    # Returns empty list if tmux isn't running
-    let running_sessions = (
-        try {
-            tmux list-sessions -F "#{session_name}" | lines
-        } catch { [] }
-    )
-
-    # 3. Combine lists (Projects + Existing Sessions)
-    # We color existing sessions green in FZF so you can distinguish them
-    let all_options = (
-        $project_paths 
-        | append ($running_sessions | each { |s| $"($s) (Running)" })
-    )
-
+    # 2. Select with FZF
     let selection = (
-        $all_options 
+        $project_paths 
         | str join (char newline)
-        | fzf --height 40% --reverse --border --header "Select Project or Session"
+        | fzf --height 40% --reverse --border --header "Select Project Folder"
         | str trim
     )
 
+    # Exit if cancelled
     if ($selection | is-empty) { return }
 
-    # 4. Determine if we are switching to a dir or a running session
-    if ($selection | str ends-with " (Running)") {
-        # It's an existing session
-        let session_name = ($selection | str replace " (Running)" "")
-        _tmux_connect $session_name
-    } else {
-        # It's a directory -> Create new session name from folder name
-        let session_name = ($selection | path basename | str replace "." "_")
-        
-        # Create the session detached first (if it doesn't exist)
-        # -d = detached, -s = name, -c = start directory
-        try {
-            tmux new-session -d -s $session_name -c $selection
-        }
+    # 3. Derive session name (folder name, replace . with _)
+    let session_name = ($selection | path basename | str replace "." "_")
 
-        _tmux_connect $session_name
+    # 4. Create session if it doesn't exist (detached)
+    try {
+        tmux new-session -d -s $session_name -c $selection
     }
+
+    # 5. Connect (using your existing helper)
+    _tmux_connect $session_name
 }
 
 # Helper to handle "Attach vs Switch" logic
