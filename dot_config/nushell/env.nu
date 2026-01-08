@@ -9,10 +9,12 @@ let cargo_bin = ($env.HOME | path join '.cargo/bin')
 let dotnet_tools = ($env.HOME | path join '.dotnet/tools')
 let personal_bin = ($env.HOME | path join 'personal/bin')
 let flutter_bin = ($env.HOME | path join 'develop/flutter/bin')
+let go_bin = ($env.HOME | path join 'go/bin')
 
 $env.PATH = (
   $env.PATH
   | split row (char esep)
+  | prepend $go_bin
   | prepend $flutter_bin
   | prepend $personal_bin
   | prepend $dotnet_tools
