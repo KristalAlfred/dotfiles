@@ -134,11 +134,25 @@ $env.config.keybindings = (
         keycode: char_t
         mode: [emacs, vi_normal, vi_insert]
         event: {
-            send: executehostcommand
+            send: ExecuteHostCommand
             cmd: "t"
         }
     }
 )
+
+$env.config.keybindings = $env.config.keybindings | append {
+    name: paste_bash_multiline
+    modifier: alt
+    keycode: char_v
+    mode: [emacs, vi_normal, vi_insert]
+    event: { send: ExecuteHostCommand 
+        cmd: r#'commandline edit (
+                clip paste
+                | str replace -ar '\\(?=\r?\n)' '' 
+                | $"\(($in))"
+            )'#
+    }
+}
 
 # --- SPECIFIC TOOLS ---
 #
@@ -146,3 +160,5 @@ $env.config.keybindings = (
 #
 fnm env --json | from json | load-env
 $env.PATH = ($env.PATH | prepend $"($env.FNM_MULTISHELL_PATH)/bin")
+
+
