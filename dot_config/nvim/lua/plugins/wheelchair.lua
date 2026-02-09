@@ -1,13 +1,13 @@
-return {
-  {
-    dir = "/Users/alfred/git/wheelchair/nvim",
-    name = "wheelchair",
-    config = function()
-      require("wheelchair").setup({
-        auto_connect = true,
-        max_history = 50,
-      })
-    end,
-    lazy = false,
-  },
-}
+-- return {
+--   {
+--     dir = "/Users/alfred/git/wheelchair/nvim",
+--     name = "wheelchair",
+--     config = function()
+--       require("wheelchair").setup({
+--         auto_connect = true,
+--         max_history = 50,
+--       })
+--     end,
+--     lazy = false,
+--   },
+-- }

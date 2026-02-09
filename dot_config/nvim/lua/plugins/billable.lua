@@ -1,8 +1,8 @@
-return {
-  dir = "/Users/alfred/git/billable.nvim",
-  name = "billable.nvim",
-  config = function()
-    require("billable").setup()
-  end,
-  lazy = false,
-}
+-- return {
+--   dir = "/Users/alfred/git/billable.nvim",
+--   name = "billable.nvim",
+--   config = function()
+--     require("billable").setup()
+--   end,
+--   lazy = false,
+-- }
