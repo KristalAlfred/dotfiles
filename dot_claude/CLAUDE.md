@@ -1,5 +1,10 @@
 # Development Preferences
 
+## General Philosophy
+
+- Be humble, most code we write is suboptimal and will be changed. That's part
+  of it. It's important not to get fooled by your own 'genius' in the moment.
+
 ## Code Style
 
 - Write clean, self-documenting code
@@ -8,12 +13,14 @@
 - Clarity is the highest priority
 - Write concise comments on functions part of public functions/methods/interfaces.
 - Almost never comment on code in functions, keep functions small instead
+- Comments are always general, never related to the context we're in. So never
+  reference the old code in the comment, only document the new.
 
 ## Testing Philosophy
 
 - Testability is critical - always consider test design
 - Prefer dependency injection for testability
-- Make side effects explicit and mockable
+- Make side effects explicit and, where applicable and suitable, mockable
 - Write tests when applicable (namely when doing smaller fixes)
   - When doing larger things, make sure to have at least one explicit example
     on how to test it.
