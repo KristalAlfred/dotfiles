@@ -86,6 +86,139 @@ def --env _tmux_connect [session_name: string] {
     }
 }
 
+# Branch-scoped tmux sessions backed by git worktrees
+def --env a [] {
+    # 1. Resolve project context
+    let raw_session = (tmux display-message -p '#S' | str trim)
+    let base_session = ($raw_session | split row '/' | first)
+    let is_feature = ($raw_session != $base_session)
+    let pane_path = (
+        tmux display-message -t $base_session -p '#{pane_current_path}' | str trim
+    )
+    let project_path = (
+        try { git -C $pane_path rev-parse --show-toplevel | str trim } catch { $pane_path }
+    )
+    let project_name = $base_session
+
+    if not ($project_path | path join '.git' | path exists) {
+        print "Not a git project session. Use 't' to open a project first."
+        return
+    }
+
+    # 2. Ensure .worktrees is in .git/info/exclude
+    let exclude_file = ($project_path | path join '.git/info/exclude')
+    if ($exclude_file | path exists) {
+        let contents = (open $exclude_file)
+        if not ($contents | str contains '.worktrees') {
+            $"($contents)\n.worktrees\n" | save -f $exclude_file
+        }
+    } else {
+        ".worktrees\n" | save -f $exclude_file
+    }
+
+    # Prune stale worktree references
+    git -C $project_path worktree prune
+
+    let current_branch = (
+        try { git -C $project_path branch --show-current | str trim } catch { "" }
+    )
+
+    # 3. Build FZF menu
+    let running_sessions = (
+        try {
+            tmux list-sessions -F '#S'
+            | lines
+            | where { |s| $s starts-with $"($project_name)/" }
+            | each { |s| $s | str replace $"($project_name)/" '' }
+        } catch { [] }
+    )
+
+    let branches = (
+        git -C $project_path branch --format '%(refname:short)' | lines | sort
+    )
+
+    let running_entries = (
+        $running_sessions | each { |s| $"($s)  [running]" }
+    )
+    let remaining_branches = (
+        $branches
+        | where { |b|
+            let safe = ($b | str replace -a '/' '-')
+            ($b != $current_branch) and not ($safe in $running_sessions)
+        }
+    )
+
+    let menu = (
+        if $is_feature { [$"← ($base_session)"] } else { [] }
+        | append $running_entries
+        | append $remaining_branches
+        | append '+ new branch'
+        | str join (char newline)
+    )
+
+    let selection = (
+        $menu
+        | fzf --ansi --reverse --border --header $"Feature sessions for ($project_name)"
+        | str trim
+    )
+
+    if ($selection | is-empty) { return }
+
+    # 4. Handle selection
+    if $selection == $"← ($base_session)" {
+        _tmux_connect $base_session
+        return
+    }
+
+    if $selection == '+ new branch' {
+        let name = (input "Branch name: " | str trim)
+        if ($name | is-empty) { return }
+        let safe_name = ($name | str replace -a '/' '-')
+        let wt_path = ($project_path | path join '.worktrees' $safe_name)
+        if not ($wt_path | path exists) {
+            try { git -C $project_path worktree add -b $name $wt_path }
+        }
+        if not ($wt_path | path exists) {
+            print $"Failed to create worktree for '($name)'"
+            input ""
+            return
+        }
+        let session = $"($project_name)/($safe_name)"
+        try { tmux new-session -d -s $session -c $wt_path }
+        _tmux_connect $session
+        return
+    }
+
+    # Strip " [running]" suffix if present
+    let is_running = ($selection | str ends-with '[running]')
+    let branch_name = if $is_running {
+        $selection | str replace '  [running]' '' | str trim
+    } else {
+        $selection
+    }
+
+    let safe_name = ($branch_name | str replace -a '/' '-')
+    let session = $"($project_name)/($safe_name)"
+
+    if $is_running {
+        _tmux_connect $session
+        return
+    }
+
+    # Create worktree if needed, then session
+    let wt_path = ($project_path | path join '.worktrees' $safe_name)
+    if not ($wt_path | path exists) {
+        try { git -C $project_path worktree add $wt_path $branch_name }
+    }
+    if not ($wt_path | path exists) {
+        print $"Failed to create worktree for '($branch_name)'"
+        input ""
+        return
+    }
+    try { tmux new-session -d -s $session -c $wt_path }
+    _tmux_connect $session
+}
+
 # --- DOCKER HELPERS ---
 # Fuzzy select running containers
 def dsel [] {
