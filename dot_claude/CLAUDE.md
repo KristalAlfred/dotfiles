@@ -66,3 +66,30 @@ Do:
 - Background: add depth (gradients/patterns), not flat default.
 
 Avoid: purple-on-white clichés, generic component grids, predictable layouts.
+
+## Agent Roster
+
+Available agents for delegation:
+
+| Agent | Role | Modifies code? |
+|-------|------|----------------|
+| architect | Design analysis, trade-offs, migration planning | No |
+| backend | Server-side implementation | Yes |
+| debugger | Root cause analysis and bug fixing | Yes |
+| designer | UI/UX implementation | Yes |
+| purger | Dead code removal and simplification | Yes |
+| researcher | Code claim verification | No |
+| reviewer | Code review for correctness/security/clarity | No |
+| tester | Test writing and coverage analysis | Yes |
+
+### When to use agent teams
+
+Use `create an agent team` for:
+- Multi-area work (frontend + backend + tests in parallel)
+- Research from multiple angles simultaneously
+- Competing hypotheses that need independent investigation
+
+Use individual subagents for:
+- Focused single-domain tasks
+- Quick reviews or verifications
+- Sequential workflows
