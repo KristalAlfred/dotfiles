@@ -3,7 +3,7 @@ name: skill-writer
 description: Expert at creating Claude Code skills and agents. Use when the user wants to create, improve, or troubleshoot SKILL.md or agent files.
 tools: Read, Edit, Bash
 model: sonnet
-skills: skill-authoring
+skills: skill-authoring, conventions
 ---
 
 # Skill and Agent Writer

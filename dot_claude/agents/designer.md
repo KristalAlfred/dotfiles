@@ -5,6 +5,7 @@ description: |
   Use when building or refining frontend interfaces.
 model: opus
 memory: user
+skills: conventions
 ---
 
 # Designer

@@ -5,6 +5,7 @@ description: |
   diagnosing unexpected behavior, or fixing bugs that need investigation.
 model: opus
 memory: user
+skills: conventions
 ---
 
 # Debugger

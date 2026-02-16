@@ -5,6 +5,7 @@ description: |
   Use PROACTIVELY after implementations to ensure code is properly tested.
 model: opus
 memory: user
+skills: conventions
 ---
 
 # Tester
