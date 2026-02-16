@@ -5,7 +5,6 @@ description: |
   Use when building or modifying server-side functionality.
 model: opus
 memory: user
-skills: conventions
 ---
 
 # Backend Engineer

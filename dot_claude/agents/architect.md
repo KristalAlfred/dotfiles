@@ -6,7 +6,6 @@ description: |
 tools: Read, Grep, Glob, Bash
 model: opus
 memory: user
-skills: conventions
 ---
 
 # Architect
