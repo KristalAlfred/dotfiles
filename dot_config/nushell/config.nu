@@ -137,8 +137,18 @@ def --env a [] {
         git -C $project_path branch --format '%(refname:short)' | lines | sort
     )
 
+    let status_dir = ($env.HOME | path join '.claude/hook-status')
     let running_entries = (
-        $running_sessions | each { |s| $"($s)  [running]" }
+        $running_sessions | each { |s|
+            let status_key = ($"($project_name)/($s)" | str replace -a '/' '%')
+            let status = try { open --raw ($status_dir | path join $status_key) | str trim } catch { "" }
+            match $status {
+                "working" => $"(ansi green)● working(ansi reset)  ($s)",
+                "idle" => $"(ansi yellow)○ idle(ansi reset)  ($s)",
+                "permission" => $"(ansi red)⚠ needs input(ansi reset)  ($s)",
+                _ => $"(ansi white_dimmed)[running](ansi reset)  ($s)",
+            }
+        }
     )
     let remaining_branches = (
         $branches
@@ -164,13 +174,15 @@ def --env a [] {
 
     if ($selection | is-empty) { return }
 
+    let clean = ($selection | ansi strip)
+
     # 4. Handle selection
-    if $selection == $"← ($base_session)" {
+    if $clean == $"← ($base_session)" {
         _tmux_connect $base_session
         return
     }
 
-    if $selection == '+ new branch' {
+    if $clean == '+ new branch' {
         let name = (input "Branch name: " | str trim)
         if ($name | is-empty) { return }
         let safe_name = ($name | str replace -a '/' '-')
@@ -189,13 +201,13 @@ def --env a [] {
         return
     }
 
-    # Strip " [running]" suffix if present
-    let is_running = ($selection | str ends-with '[running]')
+    let is_running = (
+        ($clean | str starts-with '●') or ($clean | str starts-with '○')
+        or ($clean | str starts-with '⚠') or ($clean | str starts-with '[running]')
+    )
     let branch_name = if $is_running {
-        $selection | str replace '  [running]' '' | str trim
-    } else {
-        $selection
-    }
+        $clean | str replace -r '^(● working|○ idle|⚠ needs input|\[running\])\s+' '' | str trim
+    } else { $clean }
 
     let safe_name = ($branch_name | str replace -a '/' '-')
     let session = $"($project_name)/($safe_name)"
