@@ -30,7 +30,8 @@
 - Fix root cause (not band-aid).
 - Unsure: read more code; if still stuck, ask w/ short options.
 - Conflicts: call out; pick safer path.
-- Unrecognized changes: assume other agent; keep going; focus your changes. If it causes issues, stop + ask user.
+- Unrecognized changes: assume other agent; keep going; focus your changes. If it
+  causes issues, stop + ask user.
 
 ## Communication
 
@@ -40,6 +41,9 @@
 - Surface important decisions and trade-offs
 - Only do explanatory comments if asked explicitly, or it's something
   particularly tricky/easy to trip up on that's hard to refactor out
+- When claiming things about code, you always refer to the code in some way
+  (i.e. file:line, a specific struct or something like that that makes it
+  verifiable)
 
 ## Workflow
 
@@ -71,25 +75,19 @@ Avoid: purple-on-white clichés, generic component grids, predictable layouts.
 
 Available agents for delegation:
 
-| Agent | Role | Modifies code? |
-|-------|------|----------------|
-| architect | Design analysis, trade-offs, migration planning | No |
-| backend | Server-side implementation | Yes |
-| debugger | Root cause analysis and bug fixing | Yes |
-| designer | UI/UX implementation | Yes |
-| purger | Dead code removal and simplification | Yes |
-| researcher | Code claim verification | No |
-| reviewer | Code review for correctness/security/clarity | No |
-| tester | Test writing and coverage analysis | Yes |
+| Agent      | Role                                            | Modifies code? |
+| ---------- | ----------------------------------------------- | -------------- |
+| architect  | Design analysis, trade-offs, migration planning | No             |
+| backend    | Server-side implementation                      | Yes            |
+| debugger   | Root cause analysis and bug fixing              | Yes            |
+| designer   | UI/UX implementation                            | Yes            |
+| purger     | Dead code removal and simplification            | Yes            |
+| researcher | Code claim verification                         | No             |
+| reviewer   | Code review for correctness/security/clarity    | No             |
+| tester     | Test writing and coverage analysis              | Yes            |
 
 ### When to use agent teams
 
-Use `create an agent team` for:
-- Multi-area work (frontend + backend + tests in parallel)
-- Research from multiple angles simultaneously
-- Competing hypotheses that need independent investigation
+Never. It doesn't work well with nushell at the moment.
 
-Use individual subagents for:
-- Focused single-domain tasks
-- Quick reviews or verifications
-- Sequential workflows
+Use individual subagents for everything! Don't be afraid to run them in parallel.
