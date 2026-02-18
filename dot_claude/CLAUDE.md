@@ -52,6 +52,8 @@
 - Think about error handling upfront
 - No repo-wide S/R scripts; keep edits small/reviewable
 - Use your tools
+- Dotfiles are managed with chezmoi — always write to the chezmoi source
+  directory (`~/.local/share/chezmoi/`) rather than target locations directly
 
 ## Shell
 
