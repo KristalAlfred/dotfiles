@@ -129,15 +129,15 @@ a() {
   $is_feature && menu_items+=("← $base_session")
 
   # Running sessions with status indicators
-  local s status_key status
+  local s status_key sess_status
   for s in "${running_sessions[@]}"; do
     [[ -z "$s" ]] && continue
     status_key="${project_name}/${s}"
     status_key="${status_key//\//%}"
-    status=""
-    [[ -f "$status_dir/$status_key" ]] && status=$(<"$status_dir/$status_key")
-    status="${status// /}"
-    case "$status" in
+    sess_status=""
+    [[ -f "$status_dir/$status_key" ]] && sess_status=$(<"$status_dir/$status_key")
+    sess_status="${sess_status// /}"
+    case "$sess_status" in
       working)    menu_items+=($'\033[32m● working\033[0m  '"$s") ;;
       idle)       menu_items+=($'\033[33m○ idle\033[0m  '"$s") ;;
       permission) menu_items+=($'\033[31m⚠ needs input\033[0m  '"$s") ;;
