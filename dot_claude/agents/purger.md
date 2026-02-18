@@ -5,6 +5,7 @@ description: |
   Use when a codebase needs cleanup, simplification, or consolidation.
 model: opus
 memory: user
+skills: [conventions]
 ---
 
 # Purger

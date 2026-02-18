@@ -73,21 +73,26 @@ Avoid: purple-on-white clichés, generic component grids, predictable layouts.
 
 ## Agent Roster
 
-Available agents for delegation:
+@agents/ROSTER.md
 
-| Agent      | Role                                            | Modifies code? |
-| ---------- | ----------------------------------------------- | -------------- |
-| architect  | Design analysis, trade-offs, migration planning | No             |
-| backend    | Server-side implementation                      | Yes            |
-| debugger   | Root cause analysis and bug fixing              | Yes            |
-| designer   | UI/UX implementation                            | Yes            |
-| purger     | Dead code removal and simplification            | Yes            |
-| researcher | Code claim verification                         | No             |
-| reviewer   | Code review for correctness/security/clarity    | No             |
-| tester     | Test writing and coverage analysis              | Yes            |
+### Agent Teams (experimental)
 
-### When to use agent teams
+Enabled via `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`. The lead session coordinates
+teammates — full Claude Code instances with shared task lists and direct messaging.
 
-Never. It doesn't work well with nushell at the moment.
+Use agent teams for:
+- Multi-area work (frontend + backend + tests in parallel)
+- Research from multiple angles simultaneously
+- Competing hypotheses that need independent investigation
 
-Use individual subagents for everything! Don't be afraid to run them in parallel.
+Use individual subagents for:
+- Focused single-domain tasks
+- Quick reviews or verifications
+- Sequential workflows
+
+Tips:
+- Start with research/review tasks before parallel code changes
+- 5-6 tasks per teammate keeps productivity high
+- Avoid file conflicts: each teammate owns different files
+- Use `Shift+Tab` for delegate mode (lead coordinates only, no code)
+- Use `Shift+Up/Down` to navigate teammates in-process mode
