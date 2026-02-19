@@ -3,6 +3,29 @@
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.config/claude-hooks/blinder-hook.sh session_start",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.config/claude-hooks/blinder-hook.sh prompt_submit",
+            "timeout": 5,
+            "async": true
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "hooks": [
@@ -20,6 +43,52 @@
           {
             "type": "command",
             "command": "$HOME/.config/claude-hooks/log-agent-usage.sh",
+            "timeout": 5,
+            "async": true
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.config/claude-hooks/blinder-hook.sh tool_use",
+            "timeout": 5,
+            "async": true
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.config/claude-hooks/blinder-hook.sh tool_end",
+            "timeout": 5,
+            "async": true
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.config/claude-hooks/blinder-hook.sh subagent_start",
+            "timeout": 5,
+            "async": true
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.config/claude-hooks/blinder-hook.sh subagent_stop",
             "timeout": 5,
             "async": true
           }
@@ -59,6 +128,16 @@
             "async": true
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.config/claude-hooks/blinder-hook.sh notification",
+            "timeout": 5,
+            "async": true
+          }
+        ]
       }
     ],
     "SessionEnd": [
@@ -67,6 +146,15 @@
           {
             "type": "command",
             "command": "$HOME/.config/claude-hooks/status.sh cleanup",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.config/claude-hooks/blinder-hook.sh session_end",
             "timeout": 5
           }
         ]
