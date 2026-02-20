@@ -1,115 +1,115 @@
 #!/bin/bash
-# Sends Claude Code lifecycle events to blinderd via Unix socket.
-# Called from Claude Code hooks with event type as $1.
+# Sends Claude Code lifecycle events to blinderd over Unix socket.
+# Usage: blinder-hook.sh <event_type> [args...]
 
-set -euo pipefail
+SOCKET="$HOME/.blinder/blinder.sock"
+EVENT="$1"
+shift
 
-SOCK="${BLINDER_SOCK:-$HOME/.blinder/blinder.sock}"
-[ ! -S "$SOCK" ] && exit 0
+[ -S "$SOCKET" ] || exit 0
+[ -n "$BLINDER_SUPPRESS_HOOKS" ] && exit 0
 
 INPUT=$(cat)
-SESSION_ID=$(echo "$INPUT" | jq -r '.session_id')
-[ -z "$SESSION_ID" ] || [ "$SESSION_ID" = "null" ] && exit 0
+SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
+[ -z "$SESSION_ID" ] && exit 0
 
-send_event() {
-    printf '%s' "$1" | nc -w 1 -U "$SOCK" 2>/dev/null || true
+# Grab tmux context if available (non-fatal)
+if [ -n "$TMUX_PANE" ]; then
+  TMUX_SESSION=$(tmux display-message -t "$TMUX_PANE" -p '#S' 2>/dev/null)
+  TMUX_WINDOW=$(tmux display-message -t "$TMUX_PANE" -p '#I' 2>/dev/null)
+fi
+
+# Helper: emit null for empty strings (so Rust deserializes Option<String> correctly)
+nullable() { [ -n "$1" ] && printf '"%s"' "$1" || echo null; }
+
+send() {
+  echo "$1" | nc -U -w 1 "$SOCKET" 2>/dev/null
 }
 
-get_tmux_info() {
-    [ -z "${TMUX_PANE:-}" ] && return 1
-    TMUX_SESSION_NAME=$(tmux display-message -t "$TMUX_PANE" -p '#S' 2>/dev/null) || return 1
-    TMUX_WINDOW_IDX=$(tmux display-message -t "$TMUX_PANE" -p '#I' 2>/dev/null) || return 1
-    TMUX_PANE_IDX=$(tmux display-message -t "$TMUX_PANE" -p '#{pane_index}' 2>/dev/null) || return 1
-}
-
-find_claude_pid() {
-    local pid=$PPID
-    while [ "$pid" -gt 1 ] 2>/dev/null; do
-        local comm
-        comm=$(ps -p "$pid" -o comm= 2>/dev/null | xargs) || break
-        case "$comm" in
-            node|claude) echo "$pid"; return ;;
-        esac
-        pid=$(ps -p "$pid" -o ppid= 2>/dev/null | xargs) || break
-    done
-    echo "$PPID"
-}
-
-case "${1:-}" in
-    session_start)
-        CWD=$(echo "$INPUT" | jq -r '.cwd // ""')
-        PID=$(find_claude_pid)
-        if get_tmux_info; then
-            send_event "$(jq -n \
-                --arg sid "$SESSION_ID" \
-                --argjson pid "$PID" \
-                --arg pane "$TMUX_PANE_IDX" \
-                --arg sess "$TMUX_SESSION_NAME" \
-                --arg win "$TMUX_WINDOW_IDX" \
-                --arg cwd "$CWD" \
-                '{event:"session_start",session_id:$sid,pid:$pid,tmux_pane:$pane,tmux_session:$sess,tmux_window:$win,working_dir:$cwd}')"
-        else
-            send_event "$(jq -n \
-                --arg sid "$SESSION_ID" \
-                --argjson pid "$PID" \
-                --arg cwd "$CWD" \
-                '{event:"session_start",session_id:$sid,pid:$pid,working_dir:$cwd}')"
-        fi
-        ;;
-
-    prompt_submit)
-        PROMPT=$(echo "$INPUT" | jq -r '.prompt // ""')
-        send_event "$(jq -n \
-            --arg sid "$SESSION_ID" \
-            --arg prompt "$PROMPT" \
-            '{event:"prompt_submit",session_id:$sid,prompt:$prompt}')"
-        ;;
-
-    tool_use)
-        TOOL=$(echo "$INPUT" | jq -r '.tool_name // ""')
-        TOOL_USE_ID=$(echo "$INPUT" | jq -r '.tool_use_id // ""')
-        send_event "$(jq -n \
-            --arg sid "$SESSION_ID" \
-            --arg tool "$TOOL" \
-            --arg tuid "$TOOL_USE_ID" \
-            '{event:"tool_use",session_id:$sid,tool:$tool,tool_use_id:$tuid}')"
-        ;;
-
-    tool_end)
-        TOOL_USE_ID=$(echo "$INPUT" | jq -r '.tool_use_id // ""')
-        send_event "$(jq -n \
-            --arg sid "$SESSION_ID" \
-            --arg tuid "$TOOL_USE_ID" \
-            '{event:"tool_end",session_id:$sid,tool_use_id:$tuid}')"
-        ;;
-
-    subagent_start)
-        AGENT_ID=$(echo "$INPUT" | jq -r '.agent_id // ""')
-        AGENT_TYPE=$(echo "$INPUT" | jq -r '.agent_type // ""')
-        send_event "$(jq -n \
-            --arg sid "$SESSION_ID" \
-            --arg tuid "$AGENT_ID" \
-            --arg atype "$AGENT_TYPE" \
-            '{event:"subagent_start",session_id:$sid,tool_use_id:$tuid,agent_type:$atype}')"
-        ;;
-
-    subagent_stop)
-        AGENT_ID=$(echo "$INPUT" | jq -r '.agent_id // ""')
-        send_event "$(jq -n \
-            --arg sid "$SESSION_ID" \
-            --arg tuid "$AGENT_ID" \
-            '{event:"subagent_stop",session_id:$sid,tool_use_id:$tuid}')"
-        ;;
-
-    notification)
-        send_event "$(jq -n \
-            --arg sid "$SESSION_ID" \
-            '{event:"notification",session_id:$sid}')"
-        ;;
-
-    session_end)
-        send_event "$(jq -n \
-            --arg sid "$SESSION_ID" \
-            '{event:"session_end",session_id:$sid}')"
-        ;;
+case "$EVENT" in
+  session_start)
+    send "$(jq -nc '{
+      event: "session_start",
+      session_id: $sid,
+      working_dir: $cwd,
+      pid: ($ppid | tonumber),
+      tmux_pane: $tp,
+      tmux_session: $ts,
+      tmux_window: $tw
+    }' --arg sid "$SESSION_ID" \
+       --arg cwd "$PWD" \
+       --arg ppid "$PPID" \
+       --argjson tp "$(nullable "$TMUX_PANE")" \
+       --argjson ts "$(nullable "$TMUX_SESSION")" \
+       --argjson tw "$(nullable "$TMUX_WINDOW")")"
+    ;;
+  prompt_submit)
+    PROMPT=$(echo "$INPUT" | jq -r '.prompt // empty')
+    send "$(jq -nc '{
+      event: "prompt_submit",
+      session_id: $sid,
+      prompt: $p
+    }' --arg sid "$SESSION_ID" --arg p "$PROMPT")"
+    ;;
+  tool_use)
+    TOOL=$(echo "$INPUT" | jq -r '.tool_name // empty')
+    TOOL_USE_ID=$(echo "$INPUT" | jq -r '.tool_use_id // empty')
+    send "$(jq -nc '{
+      event: "tool_use",
+      session_id: $sid,
+      tool: $t,
+      tool_use_id: $tuid
+    }' --arg sid "$SESSION_ID" --arg t "$TOOL" --arg tuid "$TOOL_USE_ID")"
+    ;;
+  subagent_start)
+    TOOL_USE_ID=$(echo "$INPUT" | jq -r '.tool_use_id // empty')
+    AGENT_TYPE=$(echo "$INPUT" | jq -r '.tool_input.subagent_type // empty')
+    DESCRIPTION=$(echo "$INPUT" | jq -r '.tool_input.description // empty')
+    send "$(jq -nc '{
+      event: "subagent_start",
+      session_id: $sid,
+      tool_use_id: $tuid,
+      agent_type: $at,
+      description: $desc
+    }' --arg sid "$SESSION_ID" --arg tuid "$TOOL_USE_ID" \
+       --arg at "$AGENT_TYPE" --argjson desc "$(nullable "$DESCRIPTION")")"
+    ;;
+  subagent_stop)
+    TOOL_USE_ID=$(echo "$INPUT" | jq -r '.tool_use_id // empty')
+    send "$(jq -nc '{
+      event: "subagent_stop",
+      session_id: $sid,
+      tool_use_id: $tuid
+    }' --arg sid "$SESSION_ID" --arg tuid "$TOOL_USE_ID")"
+    ;;
+  tool_end)
+    TOOL_USE_ID=$(echo "$INPUT" | jq -r '.tool_use_id // empty')
+    send "$(jq -nc '{
+      event: "tool_end",
+      session_id: $sid,
+      tool_use_id: $tuid
+    }' --arg sid "$SESSION_ID" --arg tuid "$TOOL_USE_ID")"
+    ;;
+  status_change)
+    STATUS="${1:-idle}"
+    send "$(jq -nc '{
+      event: "status_change",
+      session_id: $sid,
+      status: $st
+    }' --arg sid "$SESSION_ID" --arg st "$STATUS")"
+    ;;
+  notification)
+    send "$(jq -nc '{
+      event: "notification",
+      session_id: $sid
+    }' --arg sid "$SESSION_ID")"
+    ;;
+  session_end)
+    send "$(jq -nc '{
+      event: "session_end",
+      session_id: $sid
+    }' --arg sid "$SESSION_ID")"
+    ;;
 esac
+
+exit 0

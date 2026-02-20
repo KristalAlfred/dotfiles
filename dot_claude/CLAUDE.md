@@ -2,8 +2,9 @@
 
 ## General Philosophy
 
-- Be humble, most code we write is suboptimal and will be changed. That's part
-  of it. It's important not to get fooled by your own 'genius' in the moment.
+- Be humble and skeptical, most code we write is suboptimal and will be changed.
+  That's part of it. It's important not to get fooled by your own 'genius' in
+  the moment.
 
 ## Code Style
 
@@ -83,16 +84,19 @@ Enabled via `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`. The lead session coordinates
 teammates — full Claude Code instances with shared task lists and direct messaging.
 
 Use agent teams for:
+
 - Multi-area work (frontend + backend + tests in parallel)
 - Research from multiple angles simultaneously
 - Competing hypotheses that need independent investigation
 
 Use individual subagents for:
+
 - Focused single-domain tasks
 - Quick reviews or verifications
 - Sequential workflows
 
 Tips:
+
 - Start with research/review tasks before parallel code changes
 - 5-6 tasks per teammate keeps productivity high
 - Avoid file conflicts: each teammate owns different files

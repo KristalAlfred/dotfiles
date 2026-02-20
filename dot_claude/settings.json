@@ -38,6 +38,16 @@
         ]
       },
       {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.config/claude-hooks/blinder-hook.sh tool_use",
+            "timeout": 5,
+            "async": true
+          }
+        ]
+      },
+      {
         "matcher": "Task",
         "hooks": [
           {
@@ -49,10 +59,11 @@
         ]
       },
       {
+        "matcher": "Task",
         "hooks": [
           {
             "type": "command",
-            "command": "$HOME/.config/claude-hooks/blinder-hook.sh tool_use",
+            "command": "$HOME/.config/claude-hooks/blinder-hook.sh subagent_start",
             "timeout": 5,
             "async": true
           }
@@ -69,22 +80,9 @@
             "async": true
           }
         ]
-      }
-    ],
-    "SubagentStart": [
+      },
       {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$HOME/.config/claude-hooks/blinder-hook.sh subagent_start",
-            "timeout": 5,
-            "async": true
-          }
-        ]
-      }
-    ],
-    "SubagentStop": [
-      {
+        "matcher": "Task",
         "hooks": [
           {
             "type": "command",
@@ -115,6 +113,16 @@
             "async": true
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.config/claude-hooks/blinder-hook.sh status_change idle",
+            "timeout": 5,
+            "async": true
+          }
+        ]
       }
     ],
     "Notification": [
@@ -130,6 +138,7 @@
         ]
       },
       {
+        "matcher": "permission_prompt",
         "hooks": [
           {
             "type": "command",
@@ -155,7 +164,8 @@
           {
             "type": "command",
             "command": "$HOME/.config/claude-hooks/blinder-hook.sh session_end",
-            "timeout": 5
+            "timeout": 5,
+            "async": true
           }
         ]
       }
