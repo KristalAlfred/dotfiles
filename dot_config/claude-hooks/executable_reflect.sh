@@ -27,10 +27,19 @@ mkdir -p "$STATE_DIR"
 STATE_FILE="$STATE_DIR/$SESSION_ID"
 LOCK_FILE="$STATE_DIR/${SESSION_ID}.lock"
 
-# Skip if another reflection is already running for this session
-exec 200>"$LOCK_FILE"
-flock -n 200 || exit 0
-trap 'rm -f "$LOCK_FILE"' EXIT
+# Skip if another reflection is already running for this session (mkdir is atomic)
+if ! mkdir "$LOCK_FILE" 2>/dev/null; then
+    # Stale lock guard: if lock is older than 5 minutes, reclaim it
+    if [ "$(uname)" = "Darwin" ]; then
+        lock_age=$(( $(date +%s) - $(stat -f %m "$LOCK_FILE") ))
+    else
+        lock_age=$(( $(date +%s) - $(stat -c %Y "$LOCK_FILE") ))
+    fi
+    [ "$lock_age" -lt 300 ] && exit 0
+    rm -rf "$LOCK_FILE"
+    mkdir "$LOCK_FILE" 2>/dev/null || exit 0
+fi
+trap 'rm -rf "$LOCK_FILE"' EXIT
 
 LINE_COUNT=$(wc -l < "$TRANSCRIPT" | tr -d ' ')
 LAST_REFLECTED=0

@@ -6,6 +6,7 @@ Available agents for delegation:
 | backend    | Server-side implementation                      | opus  | Yes            |
 | debugger   | Root cause analysis and bug fixing              | opus  | Yes            |
 | designer   | UI/UX implementation                            | opus  | Yes            |
+| observability | Instrumentation, monitoring, alerting, SLOs  | opus  | No             |
 | purger     | Dead code removal and simplification            | opus  | Yes            |
 | researcher | Code claim verification                         | opus  | No             |
 | reviewer   | Code review for correctness/security/clarity    | opus  | No             |
