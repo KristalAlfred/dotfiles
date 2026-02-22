@@ -10,6 +10,8 @@ echo "$INPUT" | jq -c '{
   ts: (now | strftime("%Y-%m-%dT%H:%M:%SZ")),
   session_id: .session_id,
   agent_type: .tool_input.subagent_type,
+  mode: ((.tool_input.prompt | capture("(?is)mode:\\s*(?<m>Research|Decide|Act)")?.m) // null),
+  contexts: ((.tool_input.prompt | capture("(?is)contexts:\\s*(?<c>[^\\n\\r]+)")?.c) // null),
   description: .tool_input.description,
   prompt_preview: (.tool_input.prompt[:200]),
   prompt_full: .tool_input.prompt,

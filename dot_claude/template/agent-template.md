@@ -1,105 +1,56 @@
 ---
 name: agent-name
 description: |
-  When should Claude delegate to this agent?
-  Be specific and action-oriented.
-  Example: "Expert Rust code reviewer. Use PROACTIVELY after code changes 
-  to review for idiomatic patterns, performance, and safety."
-tools: Read, Grep, Glob, Edit, Bash # Optional: restrict tools. Omit for all tools.
-model: sonnet # Optional: sonnet/opus/haiku/inherit. Default: sonnet
-skills: skill-1, skill-2 # Optional: skills this agent should have access to
+  Functional contract for this mode agent or deprecated compatibility alias.
+tools: Read, Grep, Glob, Edit, Bash # Optional: restrict tools. Omit for full access.
+model: sonnet # Optional: sonnet/opus/haiku/inherit
+skills: [conventions] # Optional: startup skills
 ---
 
 # Agent Name
 
-You are a specialized agent for [specific purpose].
+State whether this file is an active mode agent or a deprecated alias shim.
 
-## Your Role
+## Contract
 
-Define exactly what this agent is responsible for:
+- **Mode**: `Research` | `Decide` | `Act`
+- **Can modify files**: `Yes` or `No`
+- **Routing**: how this file is selected
 
-- Primary responsibility 1
-- Primary responsibility 2
-- Primary responsibility 3
+## Scope
 
-## Your Capabilities
+- What the agent is responsible for
+- Inputs required before execution
+- Output required at completion
 
-What you can do:
+## Boundaries
 
-- Capability 1
-- Capability 2
-- Capability 3
+- `Research`: read-only
+- `Decide`: no edits unless explicitly requested
+- `Act`: execute only after decision, except trivial tasks
+- Tool restrictions and explicit non-goals
 
-What you should NOT do:
+## Execution Pattern
 
-- Boundary 1
-- Boundary 2
+1. Load required context skills.
+2. Perform mode-specific work.
+3. Return evidence, plan, or execution results.
 
-## Approach
+For deprecated aliases, replace this section with a short route mapping.
 
-Describe your methodology:
+## Deliverables
 
-### Phase 1: Analysis
+- Required output shape (findings, plan, or patch+validation)
+- Evidence expectations (`file:line`, command output)
+- Completion checks
 
-How you should start every task.
+## Handoffs
 
-### Phase 2: Execution
+- Next mode when work crosses boundaries
+- When to stop and ask for explicit user instruction
 
-How you should do the main work.
+## Notes for Authors
 
-### Phase 3: Verification
-
-How you should verify your work before reporting back.
-
-## Guidelines
-
-### Code Quality Standards
-
-- Standard 1
-- Standard 2
-- Standard 3
-
-### Communication Style
-
-How you should report findings:
-
-- Be concise but thorough
-- Highlight critical issues first
-- Provide actionable suggestions
-
-### Decision Making
-
-When you encounter [scenario]:
-
-1. Do this
-2. Then this
-3. Finally this
-
-## Examples
-
-### Example Task 1
-
-Show how you'd handle a typical request.
-
-### Example Task 2
-
-Show how you'd handle a complex scenario.
-
-## Edge Cases
-
-How to handle special situations:
-
-- **Scenario A**: Your response
-- **Scenario B**: Your response
-- **Scenario C**: Your response
-
----
-
-## Notes for Agent Authors
-
-- Use "use PROACTIVELY" in description for automatic invocation
-- Specify tools to limit agent's capabilities
-- Use 'inherit' model to match main conversation's model
-- List skills in frontmatter for agent to load them
-- Keep system prompt focused on agent's specific purpose
-- Test by explicitly invoking: "Use the X agent to..."
+- Keep language functional, not anthropomorphic
+- Active roster should contain only mode agents
+- Keep deprecated aliases minimal and clearly marked

@@ -1,17 +1,15 @@
-Available agents for delegation:
+Mode-first roster (active):
 
-| Agent      | Role                                            | Model | Modifies code? |
-| ---------- | ----------------------------------------------- | ----- | -------------- |
-| architect  | Design analysis, trade-offs, migration planning | opus  | No             |
-| backend    | Server-side implementation                      | opus  | Yes            |
-| debugger   | Root cause analysis and bug fixing              | opus  | Yes            |
-| designer   | UI/UX implementation                            | opus  | Yes            |
-| observability | Instrumentation, monitoring, alerting, SLOs  | opus  | No             |
-| purger     | Dead code removal and simplification            | opus  | Yes            |
-| researcher | Code claim verification                         | opus  | No             |
-| reviewer   | Code review for correctness/security/clarity    | opus  | No             |
-| tester     | Test writing and coverage analysis              | opus  | Yes            |
+| Agent | Mode | Can modify | Use when |
+| ----- | ---- | ---------- | -------- |
+| mode-research | Research | No | Evidence gathering, tracing, verification |
+| mode-decide | Decide | No | Planning, trade-offs, sequencing, risk framing |
+| mode-act | Act | Yes | Implementation, testing, validation |
 
-**Model guidance:** use opus for deep reasoning and complex implementation, sonnet
-for mechanical or exploratory tasks. Agent frontmatter is the source of truth;
-the table above is a quick reference.
+Routing rule:
+
+1. Select mode agent.
+2. Load context skills.
+3. Execute task spec.
+
+Model/tool behavior is defined in each agent frontmatter.

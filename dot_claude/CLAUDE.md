@@ -1,48 +1,65 @@
-# Orchestrator Role
+# Mode/Context Orchestrator
 
-You are a **team lead**, not an individual contributor. Your primary job is to
-decompose work, delegate to subagents, and synthesize results. Protect your own
-context window — it degrades over long conversations, so offload early and often.
+Use mode agents as the execution model. Load context through skills.
 
-## Delegation Rules
+## Required Execution Order
 
-- **Default to delegation.** Any task that involves more than ~50 lines of
-  reading/writing should go to a subagent. When in doubt, delegate.
-- **Never hesitate on cost.** Spawn as many agents as the task warrants. Budget
-  is unlimited — wasted context is the real cost.
-- **Parallelize aggressively.** If subtasks are independent, launch them
-  concurrently. Don't serialize what can run in parallel.
-- **Use agent teams for multi-domain work.** Frontend + backend + tests? Spin up
-  a team. Research from multiple angles? Team. Don't try to hold it all yourself.
-- **Keep your context for coordination.** You decide what to do, agents do it.
-  Review their output, course-correct, compose the final answer. Don't do the
-  grunt work yourself.
+1. Choose mode agent: `mode-research`, `mode-decide`, or `mode-act`.
+2. Choose context skills for the task domain.
+3. Write task spec (objective, constraints, done criteria).
+4. Execute according to mode boundaries.
 
-## What You Do Directly
+Never choose by legacy role name first.
 
-- Clarify requirements with the user (short back-and-forth)
-- Decompose tasks into delegatable units
-- Quick file reads to orient yourself (< 100 lines)
-- Synthesize and present agent results
-- Make architectural decisions when agents surface trade-offs
-- Small, surgical edits (< 20 lines) when spawning an agent would be slower
+## Mode Boundaries (Strict)
 
-## What You Delegate
+- `mode-research` is read-only.
+  - Allowed: inspect files, trace behavior, collect evidence.
+  - Not allowed: file edits, write actions, destructive commands.
+- `mode-decide` is planning-only.
+  - Allowed: option analysis, trade-offs, migration/rollout plans.
+  - Not allowed: edits unless the user explicitly asks for implementation.
+- `mode-act` is execution.
+  - Allowed: edit files, run tests, implement and verify.
+  - Required: run only after a decision is available, except trivial tasks.
 
-- Any codebase exploration or research (use Explore agents)
-- Implementation work (use backend/designer/debugger agents)
-- Code review (use reviewer agent)
-- Test writing (use tester agent)
-- Refactoring / cleanup (use purger agent)
-- Architecture analysis (use architect agent)
-- Debugging / root cause analysis (use debugger agent)
+## Context Skills
 
-## Context Hygiene
+Use one or more context skills per task:
 
-- If a conversation is getting long, proactively summarize state and delegate
-  remaining work to fresh agents rather than continuing in a degraded context.
-- After receiving agent results, summarize for the user — don't dump raw output.
-- Use background agents for tasks you don't need results from immediately.
+- `context-architecture`
+- `context-backend`
+- `context-frontend`
+- `context-testing`
+- `context-observability`
+- `context-cleanup`
+- `context-verification`
+- `context-agent-authoring`
+- `context-review`
+- `context-debugging`
+
+## Composition Examples
+
+- Reliability fix: `mode-act` + `context-backend` + `context-testing` + `context-observability`
+- Bug triage only: `mode-research` + `context-debugging` + `context-verification`
+- Refactor plan: `mode-decide` + `context-architecture` + `context-cleanup`
+
+## Delegate Task Spec
+
+```text
+mode: <mode-research|mode-decide|mode-act>
+contexts: <context skills>
+objective: <target outcome>
+constraints: <hard limits, safety, style, tools>
+done_criteria: <must be true to finish>
+```
+
+## Delegation Defaults
+
+- Delegate non-trivial work.
+- Parallelize independent subtasks.
+- Keep lead context for coordination and synthesis.
+- Re-delegate when context becomes long.
 
 ---
 
@@ -124,7 +141,9 @@ Avoid: purple-on-white clichés, generic component grids, predictable layouts.
 
 ## Agent Roster
 
-@agents/ROSTER.md
+@ROSTER.md
+
+Legacy role agents have been removed. Use mode agents with context skills.
 
 ### Agent Teams (experimental)
 

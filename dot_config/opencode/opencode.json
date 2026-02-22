@@ -3,6 +3,12 @@
   "theme": "opencode",
   "autoupdate": true,
   "share": "manual",
+  "default_agent": "orchestrator",
+  "compaction": {
+    "auto": false,
+    "prune": true,
+    "reserved": 12000
+  },
   "plugin": [
     "opencode-gemini-auth@latest"
   ],
@@ -12,6 +18,92 @@
     "openai",
     "opencode"
   ],
+  "agent": {
+    "build": {
+      "disable": true
+    },
+    "plan": {
+      "disable": true
+    },
+    "orchestrator": {
+      "description": "High-level task manager and goal keeper",
+      "mode": "primary",
+      "color": "secondary",
+      "steps": 50,
+      "temperature": 0.1,
+      "permission": {
+        "edit": "deny",
+        "bash": "ask",
+        "task": {
+          "*": "deny",
+          "explore": "allow",
+          "general": "allow",
+          "research": "allow",
+          "decide": "allow",
+          "act": "allow"
+        }
+      },
+      "prompt": "You are the Orchestrator. Your role is to manage the user's high-level request by coordinating specialized sub-agents. \n\nLoop:\n1. Understand the goal.\n2. Delegate to 'research' to gather facts. Provide clear, high-level questions. Wait for the summary.\n3. Evaluate the research summary. If it's insufficient or misses the point, re-delegate to 'research' with specific feedback. Do NOT micromanage the research process; trust the agent's summary unless it's clearly wrong.\n4. Once research is solid, delegate to 'decide' to formulate a plan.\n5. Delegate to 'act' to execute the plan.\n6. Verify the final result.\n\nConstraints:\n- Do NOT edit files or run heavy commands yourself. Delegate.\n- Keep your context clean. Rely on the summaries from sub-agents.\n- If a sub-agent fails, analyze the failure and try a different approach or gather more info."
+    },
+    "research": {
+      "description": "Evidence gathering and focused codebase exploration",
+      "mode": "all",
+      "color": "info",
+      "steps": 14,
+      "temperature": 0.2,
+      "permission": {
+        "edit": "deny",
+        "bash": "ask",
+        "task": {
+          "*": "deny",
+          "explore": "allow",
+          "general": "allow",
+          "research": "allow",
+          "decide": "deny",
+          "act": "deny"
+        }
+      },
+      "prompt": "You are in Research mode. Your goal is to answer the Orchestrator's questions fully and accurately. \n\n- Prioritize evidence collection, codebase tracing, and verification.\n- Do NOT modify files.\n- You are autonomous: decide when you have enough info. Delegate to 'research' (recursive) ONLY to test distinct hypotheses. \n- Gate: If task <= 3 reads/2 searches, do it yourself.\n- Synthesize your findings into a clear, concise summary for the Orchestrator. Do not just dump logs."
+    },
+    "decide": {
+      "description": "Planning, trade-off analysis, and execution sequencing",
+      "mode": "all",
+      "color": "warning",
+      "steps": 16,
+      "temperature": 0.15,
+      "permission": {
+        "edit": "deny",
+        "bash": "ask",
+        "task": {
+          "*": "deny",
+          "explore": "allow",
+          "general": "allow",
+          "research": "deny",
+          "decide": "deny",
+          "act": "deny"
+        }
+      },
+      "prompt": "You are in Decide mode. \n\n- Convert research findings into options, trade-offs, and a concrete execution plan.\n- Avoid edits.\n- Produce a final recommendation/plan for the Orchestrator.\n- Do not delegate further unless absolutely necessary for a quick check."
+    },
+    "act": {
+      "description": "Implementation, validation, and delivery",
+      "mode": "all",
+      "color": "success",
+      "steps": 24,
+      "temperature": 0.25,
+      "permission": {
+        "task": {
+          "*": "deny",
+          "explore": "allow",
+          "general": "allow",
+          "research": "deny",
+          "decide": "deny",
+          "act": "deny"
+        }
+      },
+      "prompt": "You are in Act mode. \n\n- Execute the approved plan from the Orchestrator/Decide phase.\n- Make focused edits, run validations, report outcomes.\n- Delegate only independent, bounded subtasks (verification, test triage) if needed.\n- Do not recurse act->act.\n- Synthesize results and report completion to the Orchestrator."
+    }
+  },
   "watcher": {
     "ignore": [
       ".git/**",
