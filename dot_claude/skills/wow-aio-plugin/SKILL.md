@@ -1,5 +1,5 @@
 ---
-name: Wow WOTLK AIO
+name: wow-aio-plugin
 description: API Definition for writing AIO plugins (which are lua plugins in the Wow WOTLK 3.3.5 client)
 ---
 

@@ -1,4 +1,5 @@
 ---
+name: pr-description
 description: Generate concise PR descriptions from branch diffs. Use when preparing a pull request, writing PR body, or needing a summary of changes against main/master or another base branch.
 ---
 

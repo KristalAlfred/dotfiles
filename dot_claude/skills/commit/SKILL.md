@@ -1,4 +1,5 @@
 ---
+name: commit
 description: Generate concise commit messages from staged changes. Use when committing, writing commit messages, or running /commit.
 ---
 

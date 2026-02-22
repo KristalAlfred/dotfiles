@@ -1,4 +1,5 @@
 ---
+name: crank
 description: Run and interpret Crank comparison tests. Use when asking to "run crank", "compare endpoints", "test against simulcast", "check parity", "benchmark", or "refresh token". Only relevant in stream-starter.
 ---
 
