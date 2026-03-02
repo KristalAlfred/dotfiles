@@ -9,15 +9,8 @@
     "prune": true,
     "reserved": 12000
   },
-  "plugin": [
-    "opencode-gemini-auth@latest"
-  ],
-  "enabled_providers": [
-    "anthropic",
-    "google",
-    "openai",
-    "opencode"
-  ],
+  "plugin": ["opencode-gemini-auth@latest"],
+  "enabled_providers": ["anthropic", "google", "openai", "opencode"],
   "agent": {
     "build": {
       "disable": true
@@ -49,7 +42,7 @@
       "description": "Evidence gathering and focused codebase exploration",
       "mode": "all",
       "color": "info",
-      "steps": 14,
+      "steps": 60,
       "temperature": 0.2,
       "permission": {
         "edit": "deny",
@@ -69,7 +62,7 @@
       "description": "Planning, trade-off analysis, and execution sequencing",
       "mode": "all",
       "color": "warning",
-      "steps": 16,
+      "steps": 60,
       "temperature": 0.15,
       "permission": {
         "edit": "deny",
@@ -89,7 +82,7 @@
       "description": "Implementation, validation, and delivery",
       "mode": "all",
       "color": "success",
-      "steps": 24,
+      "steps": 60,
       "temperature": 0.25,
       "permission": {
         "task": {
@@ -105,11 +98,6 @@
     }
   },
   "watcher": {
-    "ignore": [
-      ".git/**",
-      "node_modules/**",
-      "dist/**",
-      ".worktrees/**"
-    ]
+    "ignore": [".git/**", "node_modules/**", "dist/**", ".worktrees/**"]
   }
 }

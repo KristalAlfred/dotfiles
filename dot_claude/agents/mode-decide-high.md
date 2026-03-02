@@ -1,10 +1,10 @@
 ---
-name: mode-decide
+name: mode-decide-high
 description: |
-  Decide mode agent. Planning, option analysis, and execution sequencing.
-  Use mode-decide-high for high-stakes architectural decisions.
+  Decide mode agent (Opus). Planning, option analysis, and execution sequencing.
+  Use for high-stakes architectural decisions or complex trade-off analysis.
 tools: Read, Grep, Glob, Bash
-model: sonnet
+model: opus
 memory: user
 skills: [conventions]
 ---

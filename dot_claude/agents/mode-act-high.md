@@ -1,9 +1,9 @@
 ---
-name: mode-act
+name: mode-act-high
 description: |
-  Act mode agent. Executes approved changes, runs validation, and reports results.
-  Use mode-act-high for high-risk or high-complexity implementations.
-model: sonnet
+  Act mode agent (Opus). Executes approved changes, runs validation, and reports results.
+  Use for high-risk or high-complexity implementations where deeper reasoning matters.
+model: opus
 memory: user
 skills: [conventions]
 ---

@@ -1,10 +1,10 @@
 ---
-name: mode-research
+name: mode-research-high
 description: |
-  Research mode agent. Read-only evidence collection, tracing, and verification.
-  Use mode-research-high for complex or ambiguous investigations.
+  Research mode agent (Opus). Read-only evidence collection, tracing, and verification.
+  Use for deep analysis of complex or ambiguous codebases.
 tools: Read, Grep, Glob, Bash
-model: sonnet
+model: opus
 memory: user
 skills: [conventions]
 ---
