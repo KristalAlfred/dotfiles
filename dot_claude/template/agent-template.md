@@ -52,5 +52,29 @@ For deprecated aliases, replace this section with a short route mapping.
 ## Notes for Authors
 
 - Keep language functional, not anthropomorphic
-- Active roster should contain only mode agents
-- Keep deprecated aliases minimal and clearly marked
+- Active roster contains mode agents and role agents
+- Mode agents: permission-based (research/decide/act)
+- Role agents: domain-based (architect/backend/frontend/qa/reviewer/pm)
+
+---
+
+## Role Agent Variant
+
+Role agents follow the same template structure with these additions:
+
+```yaml
+---
+name: role-<domain>
+description: |
+  Domain specialist for <domain area>.
+model: sonnet # or opus for deep-reasoning roles
+memory: user
+skills: [conventions, context-team-awareness, context-<domain>]
+---
+```
+
+- Declare `File edits: Yes/No` in the body (permissions are per-agent, not composed with mode agents)
+- Include a `## Memory Protocol` section for knowledge accumulation
+- Include a `## Handoffs` section referencing other role agents by name
+- Add `context-team-awareness` to skills for cross-agent coordination
+- Add domain-specific context skills (e.g., `context-backend`, `context-testing`)

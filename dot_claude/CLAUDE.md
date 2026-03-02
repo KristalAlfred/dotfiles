@@ -9,7 +9,7 @@ Use mode agents as the execution model. Load context through skills.
 3. Write task spec (objective, constraints, done criteria).
 4. Execute according to mode boundaries.
 
-Never choose by legacy role name first.
+For generic tasks, start with mode agents. For domain-heavy tasks, use role agents directly.
 
 ## Mode Boundaries (Strict)
 
@@ -38,17 +38,29 @@ Use one or more context skills per task:
 - `context-review`
 - `context-debugging`
 
+## Role Agents
+
+Domain specialists with accumulated knowledge. Pick one agent per task:
+
+- **Mode agents**: generic disciplined workflows (research/decide/act), no domain expertise
+- **Role agents**: domain expertise baked in, permissions set per agent (see ROSTER.md)
+
+Available: `role-architect`, `role-backend`, `role-frontend`, `role-qa`, `role-reviewer`, `role-pm`
+
 ## Composition Examples
 
 - Reliability fix: `mode-act` + `context-backend` + `context-testing` + `context-observability`
 - Bug triage only: `mode-research` + `context-debugging` + `context-verification`
 - Refactor plan: `mode-decide` + `context-architecture` + `context-cleanup`
+- API implementation: `role-backend` (has context-backend + context-testing built in)
+- Design review: `role-architect` (has context-architecture built in)
+- Full-stack team: `role-pm` (coord) + `role-backend` + `role-frontend` + `role-qa` + `role-reviewer`
 
 ## Delegate Task Spec
 
 ```text
-mode: <mode-research|mode-decide|mode-act>
-contexts: <context skills>
+agent: <mode-*|role-*>
+contexts: <context skills> (role agents have these built in)
 objective: <target outcome>
 constraints: <hard limits, safety, style, tools>
 done_criteria: <must be true to finish>
@@ -143,7 +155,8 @@ Avoid: purple-on-white clichés, generic component grids, predictable layouts.
 
 @ROSTER.md
 
-Legacy role agents have been removed. Use mode agents with context skills.
+Role agents provide domain expertise; mode agents provide disciplined workflows.
+Use both together for domain-heavy tasks in team contexts.
 
 ### Agent Teams (experimental)
 
