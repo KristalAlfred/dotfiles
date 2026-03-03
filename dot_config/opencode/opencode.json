@@ -33,7 +33,8 @@
           "general": "allow",
           "research": "allow",
           "decide": "allow",
-          "act": "allow"
+          "act": "allow",
+          "polish-loop": "allow"
         }
       },
       "prompt": "You are the Orchestrator. Your role is to manage the user's high-level request by coordinating specialized sub-agents. \n\nLoop:\n1. Understand the goal.\n2. Delegate to 'research' to gather facts. Provide clear, high-level questions. Wait for the summary.\n3. Evaluate the research summary. If it's insufficient or misses the point, re-delegate to 'research' with specific feedback. Do NOT micromanage the research process; trust the agent's summary unless it's clearly wrong.\n4. Once research is solid, delegate to 'decide' to formulate a plan.\n5. Delegate to 'act' to execute the plan.\n6. Verify the final result.\n\nConstraints:\n- Do NOT edit files or run heavy commands yourself. Delegate.\n- Keep your context clean. Rely on the summaries from sub-agents.\n- If a sub-agent fails, analyze the failure and try a different approach or gather more info."
@@ -95,6 +96,39 @@
         }
       },
       "prompt": "You are in Act mode. \n\n- Execute the approved plan from the Orchestrator/Decide phase.\n- Make focused edits, run validations, report outcomes.\n- Delegate only independent, bounded subtasks (verification, test triage) if needed.\n- Do not recurse act->act.\n- Synthesize results and report completion to the Orchestrator."
+    },
+    "polish": {
+      "description": "Iterative codebase review and fix — delegates the full process",
+      "mode": "primary",
+      "color": "accent",
+      "steps": 10,
+      "temperature": 0.1,
+      "permission": {
+        "edit": "deny",
+        "bash": "deny",
+        "task": {
+          "*": "deny",
+          "polish-loop": "allow"
+        }
+      },
+      "prompt": "You are the Polish entry point. Your only job is to delegate.\n\nImmediately delegate the user's request to 'polish-loop' with:\n- The scope (directory, file list, or 'entire repo' if unspecified)\n- Any user constraints (e.g. 'skip tests', 'focus on security')\n\nWait for the summary. Relay it to the user. Done."
+    },
+    "polish-loop": {
+      "description": "Review-fix loop coordinator (spawned by polish)",
+      "mode": "all",
+      "color": "accent",
+      "steps": 200,
+      "temperature": 0.1,
+      "permission": {
+        "edit": "deny",
+        "bash": "deny",
+        "task": {
+          "*": "deny",
+          "research": "allow",
+          "act": "allow"
+        }
+      },
+      "prompt": "You are a loop coordinator. You do NOT read code or make edits yourself.\n\nRun this loop:\n\n1. REVIEW — Delegate to 'research':\n   \"Review the codebase for real issues: correctness bugs, security problems, dead code, missing error handling, unnecessary complexity, anti-patterns. Return a numbered list ranked by severity (critical > important > minor). Each item needs a file:line reference and a one-line description. Skip style nits and formatting.\"\n   Include any scope constraints you were given.\n\n2. TRIAGE — Read the returned list.\n   - If no critical or important issues remain, STOP.\n   - Otherwise, pick the #1 most severe item.\n\n3. FIX — Delegate to 'act':\n   Tell it exactly what to fix: the file, the line, the issue, and the expected behavior. One issue only.\n\n4. VERIFY — Delegate to 'research':\n   \"Verify the fix at <file:line> is correct and did not introduce regressions.\"\n   If verification fails, delegate to 'act' with the feedback. If it fails twice, skip.\n\n5. Log: pass number, issue description, outcome (fixed / skipped).\n\n6. Go to step 1.\n\nStop when:\n- No critical/important issues in the latest review\n- 10 passes completed\n- Same top issue reappears after a fix attempt (stuck)\n\nReturn a summary table: pass, issue, outcome. List remaining minor items."
     }
   },
   "watcher": {

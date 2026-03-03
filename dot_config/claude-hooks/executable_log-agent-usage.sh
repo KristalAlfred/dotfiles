@@ -1,20 +1,31 @@
 #!/bin/bash
-LOG_DIR="$HOME/.claude/usage-logs"
-mkdir -p "$LOG_DIR"
+DB="$HOME/.claude/usage.db"
 
-INPUT=$(cat)
+if [[ ! -f "$DB" ]]; then
+  sqlite3 "$DB" <<'SQL'
+    CREATE TABLE agent_usage (
+      ts           TEXT NOT NULL,
+      session_id   TEXT,
+      agent_type   TEXT,
+      description  TEXT,
+      prompt_preview TEXT,
+      model        TEXT,
+      project      TEXT
+    );
+    CREATE INDEX idx_ts ON agent_usage(ts);
+    CREATE INDEX idx_agent ON agent_usage(agent_type);
+    CREATE INDEX idx_project ON agent_usage(project);
+SQL
+fi
 
-LOG_FILE="$LOG_DIR/$(date -u +%Y-%m-%d).jsonl"
-
-echo "$INPUT" | jq -c '{
-  ts: (now | strftime("%Y-%m-%dT%H:%M:%SZ")),
-  session_id: .session_id,
-  agent_type: .tool_input.subagent_type,
-  mode: ((.tool_input.prompt | capture("(?is)mode:\\s*(?<m>Research|Decide|Act)")?.m) // null),
-  contexts: ((.tool_input.prompt | capture("(?is)contexts:\\s*(?<c>[^\\n\\r]+)")?.c) // null),
-  description: .tool_input.description,
-  prompt_preview: (.tool_input.prompt[:200]),
-  prompt_full: .tool_input.prompt,
-  model: .tool_input.model,
-  project: (.cwd | split("/") | last)
-}' >> "$LOG_FILE" 2>/dev/null
+cat | jq -r '[
+  (now | strftime("%Y-%m-%dT%H:%M:%SZ")),
+  .session_id,
+  .tool_input.subagent_type,
+  .tool_input.description,
+  (.tool_input.prompt[:200]),
+  (.tool_input.model // ""),
+  (.cwd | split("/") | last)
+] | @csv' | sqlite3 "$DB" \
+  '.mode csv' \
+  '.import /dev/stdin agent_usage'

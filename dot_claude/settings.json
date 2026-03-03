@@ -48,7 +48,7 @@
         ]
       },
       {
-        "matcher": "Task",
+        "matcher": "Agent",
         "hooks": [
           {
             "type": "command",
@@ -59,7 +59,7 @@
         ]
       },
       {
-        "matcher": "Task",
+        "matcher": "Agent",
         "hooks": [
           {
             "type": "command",
@@ -82,7 +82,7 @@
         ]
       },
       {
-        "matcher": "Task",
+        "matcher": "Agent",
         "hooks": [
           {
             "type": "command",
@@ -100,16 +100,6 @@
             "type": "command",
             "command": "$HOME/.config/claude-hooks/status.sh idle",
             "timeout": 5,
-            "async": true
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$HOME/.config/claude-hooks/reflect.sh",
-            "timeout": 120,
             "async": true
           }
         ]

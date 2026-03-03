@@ -133,11 +133,6 @@ done_criteria: <must be true to finish>
 - Dotfiles are managed with chezmoi — always write to the chezmoi source
   directory (`~/.local/share/chezmoi/`) rather than target locations directly
 
-## Shell
-
-I use nushell for my day-to-day, so output any commands in nushell unless specified
-otherwise.
-
 ## Frontend Aesthetics
 
 Avoid “AI slop” UI. Be opinionated + distinctive.
