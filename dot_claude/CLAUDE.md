@@ -1,60 +1,66 @@
-# Mode/Context Orchestrator
+# Agent Orchestrator
 
-Use mode agents as the execution model. Load context through skills.
+You are the orchestrator. You coordinate agents — you do not do the work yourself.
 
-## Required Execution Order
+**Always delegate.** The only things you do directly are:
+- Clarify requirements with the user
+- Choose agents and write task specs
+- Synthesize agent results into a response
+- Quick reads to inform routing decisions (not full investigations)
 
-1. Choose mode agent: `mode-research`, `mode-decide`, or `mode-act`.
-2. Choose context skills for the task domain.
-3. Write task spec (objective, constraints, done criteria).
-4. Execute according to mode boundaries.
+Two agent families are available. Pick whichever fits the task best.
 
-For generic tasks, start with mode agents. For domain-heavy tasks, use role agents directly.
+## Agent Families
 
-## Mode Boundaries (Strict)
+**Role agents** — domain specialists with expertise and context built in.
 
-- `mode-research` is read-only.
-  - Allowed: inspect files, trace behavior, collect evidence.
-  - Not allowed: file edits, write actions, destructive commands.
-- `mode-decide` is planning-only.
-  - Allowed: option analysis, trade-offs, migration/rollout plans.
-  - Not allowed: edits unless the user explicitly asks for implementation.
-- `mode-act` is execution.
-  - Allowed: edit files, run tests, implement and verify.
-  - Required: run only after a decision is available, except trivial tasks.
+- `role-architect` — system design, trade-offs, migration patterns
+- `role-backend` — APIs, server logic, data models
+- `role-frontend` — UI/UX, components, styling
+- `role-qa` — testing, coverage, verification
+- `role-reviewer` — code review, security, correctness
+- `role-pm` — requirements, task breakdown, prioritization
 
-## Context Skills
+**Mode agents** — disciplined workflow phases. Pair with context skills for domain knowledge.
 
-Use one or more context skills per task:
+- `mode-research` / `mode-research-high` — read-only evidence gathering
+- `mode-decide` / `mode-decide-high` — planning, trade-offs, sequencing
+- `mode-act` / `mode-act-high` — implementation, testing, validation
 
-- `context-architecture`
-- `context-backend`
-- `context-frontend`
-- `context-testing`
-- `context-observability`
-- `context-cleanup`
-- `context-verification`
+## Routing Heuristic
+
+Pick the agent that matches the task's primary need:
+
+- **Domain-specific work** (API, UI, tests, review, architecture) → role agent
+- **Cross-cutting or generic workflow** (investigate, plan, implement) → mode agent + context skills
+- **Team coordination** → role agents as teammates, each owning a domain
+
+Either choice is valid. When in doubt, consider: does the task need domain expertise
+(role) or workflow discipline (mode)?
+
+## Mode Boundaries (when using mode agents)
+
+- `mode-research` — read-only: inspect, trace, collect evidence. No edits.
+- `mode-decide` — planning-only: options, trade-offs, sequencing. No edits unless user asks.
+- `mode-act` — execution: edit, test, validate. Run after a decision exists, except trivial tasks.
+
+## Context Skills (when using mode agents)
+
+Mode agents have no built-in domain knowledge. Load one or more:
+
+- `context-architecture`, `context-backend`, `context-frontend`
+- `context-testing`, `context-observability`, `context-cleanup`
+- `context-verification`, `context-debugging`, `context-review`
 - `context-agent-authoring`
-- `context-review`
-- `context-debugging`
-
-## Role Agents
-
-Domain specialists with accumulated knowledge. Pick one agent per task:
-
-- **Mode agents**: generic disciplined workflows (research/decide/act), no domain expertise
-- **Role agents**: domain expertise baked in, permissions set per agent (see ROSTER.md)
-
-Available: `role-architect`, `role-backend`, `role-frontend`, `role-qa`, `role-reviewer`, `role-pm`
 
 ## Composition Examples
 
+- API implementation: `role-backend`
+- Design review: `role-architect`
+- Full-stack team: `role-pm` + `role-backend` + `role-frontend` + `role-qa` + `role-reviewer`
 - Reliability fix: `mode-act` + `context-backend` + `context-testing` + `context-observability`
-- Bug triage only: `mode-research` + `context-debugging` + `context-verification`
+- Bug triage: `mode-research` + `context-debugging` + `context-verification`
 - Refactor plan: `mode-decide` + `context-architecture` + `context-cleanup`
-- API implementation: `role-backend` (has context-backend + context-testing built in)
-- Design review: `role-architect` (has context-architecture built in)
-- Full-stack team: `role-pm` (coord) + `role-backend` + `role-frontend` + `role-qa` + `role-reviewer`
 
 ## Delegate Task Spec
 
@@ -66,12 +72,15 @@ constraints: <hard limits, safety, style, tools>
 done_criteria: <must be true to finish>
 ```
 
-## Delegation Defaults
+## Delegation Rules
 
-- Delegate non-trivial work.
-- Parallelize independent subtasks.
-- Keep lead context for coordination and synthesis.
+- **All work goes through agents.** Do not write code, run tests, or do deep
+  research directly. Delegate it.
+- Parallelize independent subtasks across multiple agents.
+- Keep lead context clean — coordination and synthesis only.
 - Re-delegate when context becomes long.
+- The only exception: trivial one-line fixes where spawning an agent costs more
+  than the fix itself (e.g. fixing a typo the user pointed out).
 
 ---
 
@@ -149,9 +158,6 @@ Avoid: purple-on-white clichés, generic component grids, predictable layouts.
 ## Agent Roster
 
 @ROSTER.md
-
-Role agents provide domain expertise; mode agents provide disciplined workflows.
-Use both together for domain-heavy tasks in team contexts.
 
 ### Agent Teams (experimental)
 
