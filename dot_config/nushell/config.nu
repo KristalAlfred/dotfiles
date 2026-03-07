@@ -11,6 +11,10 @@ source ($nu.default-config-dir | path join 'scripts/starship.nu')
 source ($nu.default-config-dir | path join 'scripts/zoxide.nu')
 source ($nu.default-config-dir | path join 'scripts/atuin.nu')
 
+if (($nu.default-config-dir | path join 'scripts/wt.nu') | path exists) {
+    source ($nu.default-config-dir | path join 'scripts/wt.nu')
+}
+
 # Carapace completions
 if (($nu.default-config-dir | path join 'scripts/carapace.nu') | path exists) {
     source ($nu.default-config-dir | path join 'scripts/carapace.nu')
@@ -305,5 +309,4 @@ $env.config.keybindings = $env.config.keybindings | append {
 #
 fnm env --json | from json | load-env
 $env.PATH = ($env.PATH | prepend $"($env.FNM_MULTISHELL_PATH)/bin")
-
 

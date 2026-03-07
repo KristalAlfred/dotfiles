@@ -51,6 +51,10 @@ if (which atuin | is-empty) == false {
     atuin init nu | save -f ($nu.default-config-dir | path join 'scripts/atuin.nu')
 }
 
+if (which wt | is-empty) == false {
+    wt config shell init nu | save -f ($nu.default-config-dir | path join 'scripts/wt.nu')
+}
+
 if (which carapace | is-empty) == false {
     carapace _carapace nushell | save -f ($nu.default-config-dir | path join 'scripts/carapace.nu')
 }

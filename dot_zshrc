@@ -57,166 +57,25 @@ c() {
   cd "$1" && ls -aG
 }
 
-# Attach or switch tmux session
-_tmux_connect() {
-  if [[ -z "$TMUX" ]]; then
-    tmux attach-session -t "$1"
-  else
-    tmux switch-client -t "$1"
-  fi
-}
-
-# Tmux project switcher
+# Tmux session switcher
 t() {
   local selection
   selection=$(
-    fd --mindepth 1 --maxdepth 1 --type d . ~/git ~/git-templates ~/remotes 2>/dev/null \
+    fd --mindepth 1 --maxdepth 1 --type d . /Users/alfred/git /Users/alfred/git-templates /Users/alfred/remotes 2>/dev/null \
       | sort \
-      | fzf --height 40% --reverse --border --header "Select Project Folder"
+      | fzf --height 40% --reverse --border --header "Select Project"
   )
   [[ -z "$selection" ]] && return
 
   local session_name
   session_name=$(basename "$selection" | tr '.' '_')
 
-  tmux new-session -d -s "$session_name" -c "$selection" 2>/dev/null
-  _tmux_connect "$session_name"
-}
-
-# Branch-scoped tmux sessions backed by git worktrees
-a() {
-  # 1. Resolve project context
-  local raw_session base_session is_feature pane_path project_path project_name
-  raw_session=$(tmux display-message -p '#S')
-  base_session="${raw_session%%/*}"
-  is_feature=false
-  [[ "$raw_session" != "$base_session" ]] && is_feature=true
-
-  pane_path=$(tmux display-message -t "$base_session" -p '#{pane_current_path}')
-  project_path=$(git -C "$pane_path" rev-parse --show-toplevel 2>/dev/null || echo "$pane_path")
-  project_name="$base_session"
-
-  if [[ ! -d "$project_path/.git" ]]; then
-    echo "Not a git project session. Use 't' to open a project first."
-    return 1
-  fi
-
-  # 2. Ensure .worktrees is in .git/info/exclude
-  local exclude_file="$project_path/.git/info/exclude"
-  if [[ -f "$exclude_file" ]]; then
-    command grep -q '.worktrees' "$exclude_file" || echo '.worktrees' >> "$exclude_file"
+  if [[ -z "$TMUX" ]]; then
+    tmux new-session -A -s "$session_name" -c "$selection"
   else
-    echo '.worktrees' > "$exclude_file"
+    tmux new-session -d -s "$session_name" -c "$selection" 2>/dev/null
+    tmux switch-client -t "$session_name"
   fi
-
-  git -C "$project_path" worktree prune
-
-  local current_branch
-  current_branch=$(git -C "$project_path" branch --show-current 2>/dev/null)
-
-  # 3. Build FZF menu
-  local -a running_sessions
-  running_sessions=("${(@f)$(tmux list-sessions -F '#S' 2>/dev/null | command grep "^${project_name}/" | sed "s|^${project_name}/||")}")
-  # Clean empty entries
-  running_sessions=("${(@)running_sessions:#}")
-
-  local -a branches
-  branches=("${(@f)$(git -C "$project_path" branch --format '%(refname:short)' | sort)}")
-
-  local status_dir="$HOME/.claude/hook-status"
-  local -a menu_items
-
-  $is_feature && menu_items+=("← $base_session")
-
-  # Running sessions with status indicators
-  local s status_key sess_status
-  for s in "${running_sessions[@]}"; do
-    [[ -z "$s" ]] && continue
-    status_key="${project_name}/${s}"
-    status_key="${status_key//\//%}"
-    sess_status=""
-    [[ -f "$status_dir/$status_key" ]] && sess_status=$(<"$status_dir/$status_key")
-    sess_status="${sess_status// /}"
-    case "$sess_status" in
-      working)    menu_items+=($'\033[32m● working\033[0m  '"$s") ;;
-      idle)       menu_items+=($'\033[33m○ idle\033[0m  '"$s") ;;
-      permission) menu_items+=($'\033[31m⚠ needs input\033[0m  '"$s") ;;
-      *)          menu_items+=($'\033[37m[running]\033[0m  '"$s") ;;
-    esac
-  done
-
-  # Branches not current and not already running
-  local b safe is_running
-  for b in "${branches[@]}"; do
-    [[ -z "$b" ]] && continue
-    [[ "$b" == "$current_branch" ]] && continue
-    safe="${b//\//-}"
-    is_running=false
-    for s in "${running_sessions[@]}"; do
-      [[ "$s" == "$safe" ]] && is_running=true && break
-    done
-    $is_running && continue
-    menu_items+=("$b")
-  done
-
-  menu_items+=("+ new branch")
-
-  local selection
-  selection=$(printf '%s\n' "${menu_items[@]}" \
-    | fzf --ansi --reverse --border --header "Feature sessions for $project_name")
-  [[ -z "$selection" ]] && return
-
-  # Strip ANSI
-  local clean
-  clean=$(echo "$selection" | sed $'s/\033\[[0-9;]*m//g')
-
-  # 4. Handle selection
-  if [[ "$clean" == "← $base_session" ]]; then
-    _tmux_connect "$base_session"
-    return
-  fi
-
-  if [[ "$clean" == "+ new branch" ]]; then
-    printf "Branch name: "
-    read -r name
-    [[ -z "$name" ]] && return
-    local safe_name="${name//\//-}"
-    local wt_path="$project_path/.worktrees/$safe_name"
-    if [[ ! -d "$wt_path" ]]; then
-      git -C "$project_path" worktree add -b "$name" "$wt_path" 2>/dev/null
-    fi
-    if [[ ! -d "$wt_path" ]]; then
-      echo "Failed to create worktree for '$name'"
-      read -r
-      return
-    fi
-    tmux new-session -d -s "${project_name}/${safe_name}" -c "$wt_path" 2>/dev/null
-    _tmux_connect "${project_name}/${safe_name}"
-    return
-  fi
-
-  # Running session or plain branch?
-  local branch_name
-  if [[ "$clean" =~ ^(●\ working|○\ idle|⚠\ needs\ input|\[running\]) ]]; then
-    branch_name=$(echo "$clean" | sed -E 's/^(● working|○ idle|⚠ needs input|\[running\])  //')
-    local safe_name="${branch_name//\//-}"
-    _tmux_connect "${project_name}/${safe_name}"
-    return
-  fi
-
-  branch_name="$clean"
-  local safe_name="${branch_name//\//-}"
-  local wt_path="$project_path/.worktrees/$safe_name"
-  if [[ ! -d "$wt_path" ]]; then
-    git -C "$project_path" worktree add "$wt_path" "$branch_name" 2>/dev/null
-  fi
-  if [[ ! -d "$wt_path" ]]; then
-    echo "Failed to create worktree for '$branch_name'"
-    read -r
-    return
-  fi
-  tmux new-session -d -s "${project_name}/${safe_name}" -c "$wt_path" 2>/dev/null
-  _tmux_connect "${project_name}/${safe_name}"
 }
 
 # --- DOCKER HELPERS ---
@@ -279,6 +138,10 @@ autoload -Uz compinit
 compinit -C  # -C skips security check for speed
 
 # --- TOOL INITIALIZATION ---
+
+if command -v wt &>/dev/null; then
+  eval "$(wt config shell init zsh)"
+fi
 
 if command -v zoxide &>/dev/null; then
   eval "$(zoxide init zsh)"
